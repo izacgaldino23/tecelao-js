@@ -4,7 +4,9 @@ const mult = 1
 const altMax = 500
 const raio = 100 / 100
 const diminuirImg = 20
-let passosMax = 500
+const maxUltPregos = 5
+
+let passosMax = 1000
 let pregosMax = 0
 let angulo = 0
 let altura = 0
@@ -17,7 +19,6 @@ let pregosLinhas = []
 let centroImg, centroLinhas
 let linhas = []
 let pregoAtual = 0
-let ultimoPrego
 let context
 let iniciou = false
 let intervalo
@@ -25,19 +26,22 @@ let cores = {}
 let passos = 0
 let imgX = diminuirImg
 let imgY = diminuirImg
-let colorido = false
-let buscarColorido = false
+let colorido = true
+let buscarColorido = true
 let procurarBranco = false
 let indexCorAtual = 2
 let outraCor1 = 1
 let outraCor2 = 0
-// let mudarCor = passosMax / (colorido ? 5 : 4)
-let mudarCor = passosMax
+let mudarCor = passosMax / (colorido ? 5 : 4)
+// let mudarCor = passosMax
 let corAtual
 let tolerancia = 70 // default 127
 let corLinhaImagem
 let TodasLinhas = { 0: [] }
 let indexTipoLinha = 0
+let exec = true
+
+let ultimosPregos = []
 
 function preload () {
 	// img = loadImage('merilin.png')
@@ -45,20 +49,18 @@ function preload () {
 	// img = loadImage('monkey.png')
 	// img = loadImage('dead.png')
 	// img = loadImage('sad.png')
-	// img = loadImage('let.png')
-	// img = loadImage('let2.png')
-	// img = loadImage('let3.png')
-	// img = loadImage('pintura.jpg')
+	img = loadImage('pintura.jpg')
 	// img = loadImage('vangogh.jpg')
 	// img = loadImage('ironman.png')
-	// img = loadImage('l.png')
 	// img = loadImage('lara.jpg')
 	// img = loadImage('mulher_colorida.jpg')
 	// img = loadImage('face_woman_draw.jpg')
-	img = loadImage('skull.png')
+	// img = loadImage('skull.png')
 	// img = loadImage('skull_colored.png')
 	// img = loadImage('let_teste.png')
 	// img = loadImage('izac.png')
+	// img = loadImage('rick.jpg')
+	// img = loadImage('rick2.png')
 }
 
 function setup () {
@@ -69,7 +71,7 @@ function setup () {
 	cores.cinza = color(0, 90)
 	cores.claros = color(0, 70)
 	cores.branco = color(255, 130)
-	corAtual = cores.preto
+	corAtual = cores.azul
 
 	corLinhaImagem = colorido ? cores.preto : cores.branco
 
@@ -101,7 +103,8 @@ function setup () {
 	desenharPregos(148)
 
 	// line(largura / 2 + 1, 2, largura / 2 + 1, altura - 2)
-
+	pregoAtual = Math.ceil(random(0, pregosMax - 1))
+	// frameRate(5)
 }
 
 function draw () {
@@ -210,6 +213,23 @@ function draw () {
 			}
 		}
 
+	} else if (!exec) {
+		teste()
+	}
+}
+
+function teste() {
+	exec = true
+	context = canvas.getContext('2d', {willReadFrequently: true});
+
+	for (let i=0; i < width; i+= 10) {
+		for (let j=0; j < height; j+=10) {
+			data = context.getImageData(i, j, 1, 1).data
+			// blendMode(BLEND)
+			noStroke()
+			fill(data[ 0 ], data[ 1 ], data[ 2 ])
+			rect(i, j, 10, 10)
+		}
 	}
 }
 
@@ -226,10 +246,10 @@ function desenharPregos (max) {
 		pregosImg.push(new Prego(x + centroImg.x, y + centroImg.y, ang))
 	}
 
-	// strokeWeight(2)
-	// pregosImg.map(p => {
-	// 	p.draw()
-	// })
+	strokeWeight(2)
+	pregosImg.map(p => {
+		p.draw()
+	})
 }
 
 function iniciar () {
@@ -255,7 +275,7 @@ function procurarProximoPrego () {
 	// } else {
 	// }
 	for (k in pregosImg) {
-		if (k == pregoAtual || k == ultimoPrego) continue
+		if (ultimosPregos.indexOf(k) != -1 || k == pregoAtual) continue
 
 		// calcular escuridao da linha
 		let result = calcularEscuridao(k)
@@ -273,10 +293,16 @@ function procurarProximoPrego () {
 	cor = corAtual
 	// cor = buscarCorDominante(linha)
 
-	// console.log(linha, cor)
 	let l = new Linha(pregosImg[ pregoAtual ], pregosImg[ melhorPrego ], cor)
-	ultimoPrego = pregoAtual
+	// penultimoPrego = ultimoPrego
+	// ultimoPrego = pregoAtual
+	
+	if (ultimosPregos.length == maxUltPregos) ultimosPregos.shift()
+	ultimosPregos.push(pregoAtual)
+
 	pregoAtual = melhorPrego
+	
+	console.log(pregoAtual, ultimosPregos)
 
 	return l
 }
@@ -388,7 +414,7 @@ function mousePressed () {
 	blendMode(BLEND)
 	noStroke()
 	fill(data[ 0 ], data[ 1 ], data[ 2 ])
-	rect(largura - 20, 40, 10, 10)
+	rect(mouseX, mouseY, 10, 10)
 }
 
 class Prego {
